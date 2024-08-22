@@ -1,6 +1,7 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
+import subprocess
 from pathlib import Path
 
 import click
@@ -13,7 +14,7 @@ from mutagen.flac import FLAC
 from .cache import cache
 
 # Initialization
-session, lrclib = Session(), LRCLib()
+session, lrclib, base_url = Session(), LRCLib(), "https://pizza.iipython.dev"
 
 # Good ol' click
 @click.group()
@@ -49,7 +50,7 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
             # Let's go boys!
             response = cache.find_response(artist, album)
             if response is None:
-                response = session.get("http://localhost:8000/api/find", params = {"artist": artist, "album": album}).json()
+                response = session.get(base_url, params = {"artist": artist, "album": album}).json()
                 cache.set_response(artist, album, response)
 
             if not (response["code"] == 200 and response["data"] is not None):
@@ -92,6 +93,17 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
                     final_lyrics = result.get("syncedLyrics", result.get("plainLyrics")) or result.get("plainLyrics")
                     if final_lyrics is not None:
                         metadata["LYRICS"] = final_lyrics
+
+            # Calculate BPM
+            if bpm is True:
+                ffmpeg = subprocess.Popen(
+                    ["ffmpeg", "-vn", "-i", file, "-ar", "44100", "-ac", "1", "-f", "f32le", "pipe:1"],
+                    stdout = subprocess.PIPE,
+                    stderr = subprocess.DEVNULL
+                )
+                result = subprocess.check_output(["bpm"], stdin = ffmpeg.stdout)
+                ffmpeg.wait()
+                metadata["BPM"] = str(round(float(result.removesuffix(b"\n"))))
 
             # File writing! How fun!
             metadata["PIZZA"] = "managed"

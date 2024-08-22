@@ -15,7 +15,7 @@ dependencies = [
     "mutagen>=1.47.0",
     "requests>=2.32.3",
     "lz4>=4.3.3",
-    "lrcup>=0.3.2",
+    "lrcup>=0.4.3"
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
