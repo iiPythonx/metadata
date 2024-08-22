@@ -26,7 +26,7 @@ def grab_musicbrainz(mbid: str) -> dict:
             artist["artist"]["name"]
             for artist in data["artist-credit"] if isinstance(artist, dict)
         ],
-        "date": data["date"],
+        "date": data.get("date"),
         "album": data["title"],
         "tracks": []
     }

@@ -75,8 +75,10 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
             metadata.clear()
             
             # Metadata assignments
-            metadata["YEAR"]        = response["date"].split("-")[0]
-            metadata["DATE"]        = response["date"]
+            if response["date"] is not None:
+                metadata["YEAR"] = response["date"].split("-")[0]
+                metadata["DATE"] = response["date"]
+
             metadata["DISC"]        = str(match["disc"])
             metadata["ALBUM"]       = response["album"]
             metadata["TRACK"]       = str(match["position"])
