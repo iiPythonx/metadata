@@ -24,7 +24,7 @@ def grab_musicbrainz(mbid: str) -> dict:
         },
         "artist": [
             artist["artist"]["name"]
-            for artist in data["artist-credit"]
+            for artist in data["artist-credit"] if isinstance(artist, dict)
         ],
         "date": data["date"],
         "album": data["title"],
@@ -56,7 +56,7 @@ def search_musicbrainz(artist: str, album: str) -> dict | None:
     return None
 
 # Routing
-@app.get("/api/find")
+@app.post("/api/find")
 async def route_api_find(artist: str, album: str) -> JSONResponse:
     results = db.fetch_record(artist, album)
     if results is None:

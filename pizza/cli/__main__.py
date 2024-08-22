@@ -50,7 +50,7 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
             # Let's go boys!
             response = cache.find_response(artist, album)
             if response is None:
-                response = session.get(base_url, params = {"artist": artist, "album": album}).json()
+                response = session.post(f"{base_url}/api/find", params = {"artist": artist, "album": album}).json()
                 cache.set_response(artist, album, response)
 
             if not (response["code"] == 200 and response["data"] is not None):
