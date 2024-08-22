@@ -20,6 +20,7 @@ certifi==2024.7.4
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
+    # via lrcup
     # via pizzameta
     # via uvicorn
 fastapi==0.112.1
@@ -33,11 +34,14 @@ idna==3.7
     # via requests
 levenshtein==0.25.1
     # via pizzameta
+lrcup==0.3.2
+    # via pizzameta
 lz4==4.3.3
     # via pizzameta
 musicbrainzngs==0.7.1
     # via pizzameta
 mutagen==1.47.0
+    # via lrcup
     # via pizzameta
 pydantic==2.8.2
     # via fastapi
@@ -50,6 +54,7 @@ pyyaml==6.0.2
 rapidfuzz==3.9.6
     # via levenshtein
 requests==2.32.3
+    # via lrcup
     # via pizzameta
 sniffio==1.3.1
     # via anyio

@@ -61,7 +61,8 @@ async def route_api_find(artist: str, album: str) -> JSONResponse:
     results = db.fetch_record(artist, album)
     if results is None:
         results = search_musicbrainz(artist, album)
-        db.insert_record(results["artist"], results["album"], results["tracks"])
+        if results is not None:
+            db.insert_record(results["artist"], results["album"], results["tracks"])
 
     return JSONResponse({
         "code": 200,

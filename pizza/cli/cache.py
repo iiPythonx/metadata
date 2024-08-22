@@ -16,12 +16,12 @@ class PizzaCache():
         # Load in existing cache
         self.cache = {}
         if self.cache_location.exists():
-            self.cache = json.loads(decompress(self.cache_location.read_bytes()))
+            self.cache = json.loads(decompress(self.cache_location.read_bytes()).decode())
 
         atexit.register(self.save)
 
     def save(self) -> None:
-        self.cache_location.write_bytes(compress(json.dumps(self.cache)))
+        self.cache_location.write_bytes(compress(json.dumps(self.cache).encode()))
 
     def find_response(self, artist: str, album: str) -> dict | None:
         return self.cache.get(artist, {}).get(album)

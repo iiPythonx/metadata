@@ -1,6 +1,6 @@
 [project]
 name = "pizzameta"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Accurate metadata service for audio files"
 authors = [
     { name = "iiPython", email = "ben@iipython.dev" }
@@ -15,6 +15,7 @@ dependencies = [
     "mutagen>=1.47.0",
     "requests>=2.32.3",
     "lz4>=4.3.3",
+    "lrcup>=0.3.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -29,6 +30,9 @@ build-backend = "hatchling.build"
 [tool.rye]
 managed = true
 dev-dependencies = []
+
+[tool.hatch.version]
+path = "pizza/__init__.py"
 
 [tool.hatch.metadata]
 allow-direct-references = true
