@@ -45,7 +45,18 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
             if "PIZZA" in metadata and not force:
                 continue
 
-            artist, album = metadata["ALBUMARTIST"][0], metadata["ALBUM"][0]
+            # Calculate artist
+            artist = metadata.get("ALBUMARTIST", metadata.get("ARTIST"))
+            if artist is None:
+                click.secho(f"⚠ Skipping '{file}' due to missing ARTIST tag.", fg = "yellow")
+                continue
+
+            album = metadata.get("ALBUM")
+            if album is None:
+                click.secho(f"⚠ Skipping '{file}' due to missing ALBUM tag.", fg = "yellow")
+                continue
+
+            artist, album = artist[0], album[0]
 
             # Let's go boys!
             response = cache.find_response(artist, album)
@@ -53,11 +64,14 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
                 response = session.post(f"{base_url}/api/find", params = {"artist": artist, "album": album}).json()
                 cache.set_response(artist, album, response)
 
-            if not (response["code"] == 200 and response["data"] is not None):
+            if response["code"] != 200:
                 click.secho(f"⚠ Request failed for '{file}'.", fg = "yellow")
                 continue
 
             response = response["data"]
+            if response is None:
+                click.secho(f"⚠ No match found for '{file}'.", fg = "yellow")
+                continue
 
             # Check what we have to match with
             title, track = metadata.get("TITLE"), metadata.get("TRACK")
