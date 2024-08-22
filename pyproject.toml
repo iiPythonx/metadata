@@ -1,7 +1,7 @@
 [project]
 name = "pizzameta"
 version = "0.1.0"
-description = "Accurate metadata service for audio fi;es/"
+description = "Accurate metadata service for audio files"
 authors = [
     { name = "iiPython", email = "ben@iipython.dev" }
 ]

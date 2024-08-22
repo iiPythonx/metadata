@@ -2,3 +2,6 @@
 __pycache__/
 .python-version
 requirements-dev.lock
+
+# Lmao temporary asf dw
+db.json

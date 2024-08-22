@@ -19,22 +19,31 @@ musicbrainzngs.set_useragent("pizzameta", __version__, "ben@iipython.dev")
 def grab_musicbrainz(mbid: str) -> dict:
     data = musicbrainzngs.get_release_by_id(mbid, ["artist-credits", "recordings"])["release"]
     results = {
-        "artist": data["artist-credit"][0]["artist"]["name"],
+        "ids": {
+            "album": data["id"],
+            "artist": data["artist-credit"][0]["artist"]["id"]
+        },
+        "artist": [
+            artist["artist"]["name"]
+            for artist in data["artist-credit"]
+        ],
+        "date": data["date"],
         "album": data["title"],
         "tracks": []
     }
 
     # Fill out track information
-    for medium in data["medium-list"]:
+    for index, medium in enumerate(data["medium-list"]):
         for track in medium["track-list"]:
-            track = track["recording"]
             results["tracks"].append({
+                "disc": index + 1,
                 "artist": [
                     artist["artist"]["name"]
-                    for artist in track["artist-credit"]
+                    for artist in track["recording"]["artist-credit"]
                     if isinstance(artist, dict)
                 ],
-                "title": track["title"]
+                "title": track["recording"]["title"],
+                "position": int(track["position"]) + data["medium-list"][index - 1]["track-count"] if index > 0 else int(track["position"])
             })
     
     return results
