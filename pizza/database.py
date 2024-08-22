@@ -5,8 +5,6 @@ import re
 from typing import Any, List, Optional
 
 from tinydb import TinyDB, Query
-from tinydb.storages import JSONStorage
-from tinydb.middlewares import CachingMiddleware
 
 # Main class
 class Database():

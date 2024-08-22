@@ -11,9 +11,16 @@ dependencies = [
     "musicbrainzngs>=0.7.1",
     "tinydb>=4.8.0",
     "levenshtein>=0.25.1",
+    "click>=8.1.7",
+    "mutagen>=1.47.0",
+    "requests>=2.32.3",
+    "lz4>=4.3.3",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
+
+[project.scripts]
+pizza = "pizza.cli.__main__:pizza"
 
 [build-system]
 requires = ["hatchling"]
