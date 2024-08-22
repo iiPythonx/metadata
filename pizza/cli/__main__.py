@@ -80,7 +80,7 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
                 click.secho(f"⚠ No data to match with for '{file}'.", fg = "yellow")
                 continue
 
-            match = list(filter(lambda x: str(x["position"]) == track or x["title"] == title, response["tracks"]))
+            match = list(filter(lambda x: x["title"] == title or str(x["position"]) == track, response["tracks"]))
             if not match:
                 click.secho(f"⚠ No match found for '{file}'.", fg = "yellow")
                 continue

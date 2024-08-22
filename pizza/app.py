@@ -2,7 +2,7 @@
 
 # Modules
 import musicbrainzngs
-from Levenshtein import ratio
+# from Levenshtein import ratio
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -49,11 +49,13 @@ def grab_musicbrainz(mbid: str) -> dict:
 
 def search_musicbrainz(artist: str, album: str) -> dict | None:
     results = musicbrainzngs.search_releases(album, limit = 1, artist = artist)["release-list"]
-    for result in results:
-        if ratio(result["title"].lower(), album.lower()) >= .90:
-            return grab_musicbrainz(result["id"])
+    return grab_musicbrainz(results[0]["id"]) if results else None
+    # for result in results:
+    #     print(result)
+    #     if ratio(result["title"].lower(), album.lower()) >= .90:
+    #         return grab_musicbrainz(result["id"])
 
-    return None
+    # return None
 
 # Routing
 @app.post("/api/find")
