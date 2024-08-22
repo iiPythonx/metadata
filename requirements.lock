@@ -34,7 +34,7 @@ idna==3.7
     # via requests
 levenshtein==0.25.1
     # via pizzameta
-lrcup==0.3.2
+lrcup==0.4.3
     # via pizzameta
 lz4==4.3.3
     # via pizzameta
