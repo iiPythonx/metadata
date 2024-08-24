@@ -47,25 +47,18 @@ def grab_musicbrainz(mbid: str) -> dict:
     
     return results
 
-def search_musicbrainz(artist: str, album: str) -> dict | None:
-    results = musicbrainzngs.search_releases(album, limit = 1, artist = artist)["release-list"]
+def search_musicbrainz(artist: str, album: str, trackc: int) -> dict | None:
+    results = musicbrainzngs.search_releases(album, artist = artist, tracks = trackc, limit = 1)["release-list"]
     return grab_musicbrainz(results[0]["id"]) if results else None
-    # for result in results:
-    #     print(result)
-    #     if ratio(result["title"].lower(), album.lower()) >= .90:
-    #         return grab_musicbrainz(result["id"])
-
-    # return None
 
 # Routing
 @app.post("/api/find")
-async def route_api_find(artist: str, album: str) -> JSONResponse:
-    results = db.fetch_record(artist, album)
-    if results is None:
-        results = search_musicbrainz(artist, album)
-        if results is not None:
-            db.insert_record(results["artist"], results["album"], results["tracks"])
-
+async def route_api_find(artist: str, album: str, trackc: int) -> JSONResponse:
+    # results = db.fetch_record(artist, album)
+    # if results is None:
+    results = search_musicbrainz(artist, album, trackc)
+    # if results is not None:
+        # db.insert_record(results["artist"], results["album"], results["tracks"])
     return JSONResponse({
         "code": 200,
         "data": results
