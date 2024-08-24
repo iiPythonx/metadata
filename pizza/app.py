@@ -1,17 +1,18 @@
 # Copyright (c) 2024 iiPython
 
 # Modules
+import os
+
 import musicbrainzngs
-# from Levenshtein import ratio
+from pymongo import MongoClient
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from . import __version__
-from .database import db
 
 # Initialization
-app = FastAPI()
+app, mongo = FastAPI(), MongoClient(os.environ["MONGODB_URL"]).pizza.items
 musicbrainzngs.set_useragent("pizzameta", __version__, "ben@iipython.dev")
 
 # Fetch results
@@ -54,12 +55,13 @@ def search_musicbrainz(artist: str, album: str, trackc: int) -> dict | None:
 # Routing
 @app.post("/api/find")
 async def route_api_find(artist: str, album: str, trackc: int) -> JSONResponse:
-    # results = db.fetch_record(artist, album)
-    # if results is None:
-    results = search_musicbrainz(artist, album, trackc)
-    # if results is not None:
-        # db.insert_record(results["artist"], results["album"], results["tracks"])
+    response = mongo.find_one({"artist": [artist], "album": album, "tracks": {"$size": trackc}}, {"_id": False})
+    if response is None:
+        response = search_musicbrainz(artist, album, trackc)
+        if response is not None:
+            mongo.insert_one(response)
+
     return JSONResponse({
         "code": 200,
-        "data": results
+        "data": response
     })
