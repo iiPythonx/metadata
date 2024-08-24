@@ -60,6 +60,7 @@ async def route_api_find(artist: str, album: str, trackc: int) -> JSONResponse:
         response = search_musicbrainz(artist, album, trackc)
         if response is not None:
             mongo.insert_one(response)
+            del response["_id"]  # Thanks mongo??????
 
     return JSONResponse({
         "code": 200,

@@ -122,7 +122,8 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
 
                 # Pull out JSON
                 response = response.json()
-                cache.set_response(artist, album, response)
+                if response["data"] is not None:
+                    cache.set_response(artist, album, response)
 
         except Exception:
             click.secho("  > Failed to fetch from server.", fg = "red")
