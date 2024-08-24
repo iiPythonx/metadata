@@ -177,6 +177,6 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
                 metadata["BPM"] = str(round(float(result.removesuffix(b"\n"))))
 
             # File writing
-            metadata["PIZZA"] = "managed"
+            metadata["PIZZA"] = __version__
             metadata.save()
             click.secho(f"  > Updated metadata for '{file.name}'.", fg = "green")
