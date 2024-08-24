@@ -135,7 +135,7 @@ def update(path: str, bpm: bool, lyrics: bool, force: bool) -> None:
             continue
 
         # Start matching items
-        for title, position, file in sorted(item["tracks"], key = lambda x: int(x[1]) if x is not None else 0):
+        for title, position, file in sorted(item["tracks"], key = lambda x: int(x[1]) if x[1] is not None else 0):
 
             # Check what we have to match with
             if not (title or position):
