@@ -2,6 +2,7 @@
 
 # Modules
 import logging
+import subprocess
 from pathlib import Path
 
 import click
@@ -30,7 +31,7 @@ log = logging.getLogger("rich")
 # Good ol' click
 @click.group()
 def pizza() -> None:
-    """Experimental CLI for managing metadat.
+    """Experimental CLI for managing metadata.
 
     Code available at https://github.com/iiPythonx/pizza."""
     return
@@ -39,7 +40,26 @@ def pizza() -> None:
 def version() -> None:
     return click.secho(f"Pizza v{__version__} by iiPython", fg = "blue")
 
-@pizza.command(help = "Perform a database update based on the filesystem.")
+def validate() -> None:
+    def validate_worker(file: Path, new_indexes: dict, progress: Progress, task: TaskID) -> None:
+        if not file.is_file():
+            del new_indexes[str(file)]
+            log.warn(f"'{file}' no longer exists.")
+
+        progress.update(task, advance = 1)
+
+    new_indexes = index.indexes.copy()
+    with Progress() as progress:
+        task = progress.add_task("[cyan]Validating...", total = len(new_indexes))
+        multithread([Path(file) for file in index.indexes], validate_worker, new_indexes, progress, task)
+
+    index.indexes = new_indexes
+
+@pizza.command(help = "Perform a database validation test.")
+def validate_command() -> None:
+    validate()
+
+@pizza.command(help = "Add files to the internal Pizza database.")
 @click.argument("path")
 @click.option("--no-validate", is_flag = True, default = False, help = "Skip validating existing indexes.")
 def add(path: str, no_validate: bool) -> None:
@@ -81,24 +101,23 @@ def add(path: str, no_validate: bool) -> None:
 
     # Check for removals
     if not no_validate:
-        def validate_worker(file: Path, new_indexes: dict, progress: Progress, task: TaskID) -> None:
-            if not file.is_file():
-                del new_indexes[str(file)]
-                log.warn(f"'{file}' no longer exists.")
-
-            progress.update(task, advance = 1)
-
-        new_indexes = index.indexes.copy()
-        with Progress() as progress:
-            task = progress.add_task("[cyan]Validating...", total = len(new_indexes))
-            multithread([Path(file) for file in index.indexes], validate_worker, new_indexes, progress, task)
-
-        index.indexes = new_indexes
+        validate()
 
 @pizza.command(help = "Perform a metadata update on all indexed files.")
-def write() -> None:
+@click.option("--no-validate", is_flag = True, default = False, help = "Skip validating existing indexes (not recommended).")
+@click.option("--bpm", is_flag = True, show_default = True, default = False, help = "Include song BPM in metadata")
+@click.option("--lyrics", is_flag = True, show_default = True, default = False, help = "Include lyrics from LRCLIB")
+@click.option("--force", is_flag = True, show_default = True, default = False, help = "Force write metadata")
+def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool) -> None:
+    if not no_validate:
+        validate()
+
+    # Start grouping albums
     albums = []
     for item, (artist, album, data) in index.indexes.items():
+        if "pizza" in data and not force:
+            continue
+
         existing_album = [item for item in albums if item["artist"] == artist and item["album"] == album]
         if not existing_album:
             albums.append({"artist": artist, "album": album, "tracks": [], "id": data.get("musicbrainz_albumid", [None])[0]})
@@ -190,9 +209,30 @@ def write() -> None:
                 metadata["DATE"] = match["date"]
 
             metadata["PIZZA"] = __version__
+
+            # Fetch lyrics
+            artist, album = match["artist-credit"][0]["artist"]["name"], match["title"]
+            if lyrics is True:
+                result = lrclib.get(track["recording"]["title"], artist, album, metadata.info.length)
+                if result is not None:
+                    final_lyrics = result.get("syncedLyrics", result.get("plainLyrics")) or result.get("plainLyrics")
+                    if final_lyrics is not None:
+                        metadata["LYRICS"] = final_lyrics
+
+            # Calculate BPM
+            if bpm is True:
+                ffmpeg = subprocess.Popen(
+                    ["ffmpeg", "-vn", "-i", file, "-ar", "44100", "-ac", "1", "-f", "f32le", "pipe:1"],
+                    stdout = subprocess.PIPE,
+                    stderr = subprocess.DEVNULL
+                )
+                result = subprocess.check_output(["bpm"], stdin = ffmpeg.stdout)
+                ffmpeg.wait()
+                metadata["BPM"] = str(round(float(result.removesuffix(b"\n"))))
+
+            # Save back to index database
             metadata.save()
+            index.add(file, (artist, album, dict(metadata)))
 
             # Logging!
             click.secho(f"  > Updated metadata for '{file.name}'.", fg = "green")
-
-        break
