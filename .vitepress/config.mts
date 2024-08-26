@@ -14,7 +14,13 @@ export default defineConfig({
         logo: "/pizza.png",
         nav: [
             { text: "Home", link: "/" },
-            { text: "Get Started", link: "/intro/what-is-pizza" },
+            {
+                text: "Documentation",
+                items: [
+                    { text: "Getting Started", link: "/intro/what-is-pizza" },
+                    { text: "CLI", link: "/cli/indexing" }
+                ]
+            },
             { text: "FAQ", link: "/faq" }
         ],
         sidebar: [
