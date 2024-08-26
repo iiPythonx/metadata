@@ -3,6 +3,7 @@
 # Modules
 import logging
 import subprocess
+from typing import Tuple
 from pathlib import Path
 
 import click
@@ -67,7 +68,6 @@ def add(path: str, no_validate: bool) -> None:
     if not full_path.is_dir():
         return click.secho("✗ Specified path does not exist.", fg = "red")
 
-    # Experimental as hell multithreaded indexer
     def index_worker(file: Path, progress: Progress, task: TaskID) -> None:
         try:
             metadata = FLAC(file)
@@ -103,6 +103,65 @@ def add(path: str, no_validate: bool) -> None:
     if not no_validate:
         validate()
 
+@pizza.command(help = "Remove files from the internal Pizza database.")
+@click.argument("path")
+def remove(path: str) -> None:
+    full_path = Path(path)
+    if not full_path.is_dir():
+        return click.secho("✗ Specified path does not exist.", fg = "red")
+
+    def remove_worker(file: Path, new_indexes: dict, progress: Progress, task: TaskID) -> None:
+        del new_indexes[str(file)]
+        progress.update(task, advance = 1)
+
+    files = [
+        file for file in full_path.rglob("*")
+        if (file.is_file() and file.suffix == ".flac" and index.indexed(file))
+    ]
+    new_indexes = index.indexes.copy()
+    with Progress() as progress:
+        task = progress.add_task("[cyan]Removing...", total = len(files))
+        multithread(files, remove_worker, new_indexes, progress, task)
+
+    index.indexes = new_indexes
+
+@pizza.command("list", help = "Perform an index search.")
+@click.argument("query", nargs = -1, required = True)
+def command_list(query: str | Tuple[str]) -> None:
+    query = " ".join(query)
+    for file, (artist, album, metadata) in index.indexes.items():
+        title = metadata.get("title", ["No Title"])[0]
+        if query.lower() in f"{artist} {artist} {title}".lower():
+            click.echo(f"> {click.style(title, 'yellow')} by {click.style(artist, 'yellow')} on {click.style(album, 'yellow')}")
+            click.echo(f"  > {click.style(file, 'blue')}")
+
+@pizza.command(help = "Remove metadata from the specified files.")
+@click.argument("path")
+def clean(path: str) -> None:
+    full_path = Path(path)
+    if not full_path.is_dir():
+        return click.secho("✗ Specified path does not exist.", fg = "red")
+
+    def clean_worker(file: Path, progress: Progress, task: TaskID) -> None:
+        try:
+            metadata = FLAC(file)
+            metadata.clear()
+            metadata.clear_pictures()
+            metadata.save()
+
+        except MutagenError:
+            log.warn(f"⚠ Failed loading file '{file}'.")
+
+        progress.update(task, advance = 1)
+
+    files = [
+        file for file in full_path.rglob("*")
+        if (file.is_file() and file.suffix == ".flac")
+    ]
+    with Progress() as progress:
+        task = progress.add_task("[cyan]Cleaning...", total = len(files))
+        multithread(files, clean_worker, progress, task)
+
 @pizza.command(help = "Perform a metadata update on all indexed files.")
 @click.option("--no-validate", is_flag = True, default = False, help = "Skip validating existing indexes (not recommended).")
 @click.option("--bpm", is_flag = True, show_default = True, default = False, help = "Include song BPM in metadata.")
@@ -111,7 +170,7 @@ def add(path: str, no_validate: bool) -> None:
 @click.option("--mb-score", show_default = True, default = 90, type = int, help = "Minimum MusicBrainz score before consideration.")
 @click.option("--title-ratio", show_default = True, default = 90, type = int, help = "Minimum title match ratio before consideration.")
 @click.option("--match-ratio", show_default = True, default = 90, type = int, help = "Minimum ratio of matching tracks before consideration.")
-def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, mb_score: int, title_ratio: int, match_ratio: int) -> None:
+def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, mb_score: int, title_ratio: float, match_ratio: float) -> None:
     if not all([mb_score in range(0, 100), title_ratio in range(0, 100), match_ratio in range(0, 100)]):
         return click.secho("✗ MusicBrainz score, title ratio, & match ratio must be 0-100.", fg = "red")
     
