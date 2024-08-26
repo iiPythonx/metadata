@@ -1,5 +1,5 @@
 [project]
-name = "pizzameta"
+name = "pizza"
 dynamic = ["version"]
 description = "Accurate metadata handler for audio files"
 authors = [

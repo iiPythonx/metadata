@@ -55,7 +55,7 @@ def validate() -> None:
 
     index.indexes = new_indexes
 
-@pizza.command(help = "Perform a database validation test.")
+@pizza.command("validate", help = "Perform a database validation test.")
 def validate_command() -> None:
     validate()
 
@@ -105,10 +105,20 @@ def add(path: str, no_validate: bool) -> None:
 
 @pizza.command(help = "Perform a metadata update on all indexed files.")
 @click.option("--no-validate", is_flag = True, default = False, help = "Skip validating existing indexes (not recommended).")
-@click.option("--bpm", is_flag = True, show_default = True, default = False, help = "Include song BPM in metadata")
-@click.option("--lyrics", is_flag = True, show_default = True, default = False, help = "Include lyrics from LRCLIB")
-@click.option("--force", is_flag = True, show_default = True, default = False, help = "Force write metadata")
-def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool) -> None:
+@click.option("--bpm", is_flag = True, show_default = True, default = False, help = "Include song BPM in metadata.")
+@click.option("--lyrics", is_flag = True, show_default = True, default = False, help = "Include lyrics from LRCLIB.")
+@click.option("--force", is_flag = True, show_default = True, default = False, help = "Force write metadata to files.")
+@click.option("--mb-score", show_default = True, default = 90, type = int, help = "Minimum MusicBrainz score before consideration.")
+@click.option("--title-ratio", show_default = True, default = 90, type = int, help = "Minimum title match ratio before consideration.")
+@click.option("--match-ratio", show_default = True, default = 90, type = int, help = "Minimum ratio of matching tracks before consideration.")
+def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, mb_score: int, title_ratio: int, match_ratio: int) -> None:
+    if not all([mb_score in range(0, 100), title_ratio in range(0, 100), match_ratio in range(0, 100)]):
+        return click.secho("✗ MusicBrainz score, title ratio, & match ratio must be 0-100.", fg = "red")
+    
+    title_ratio /= 100
+    match_ratio /= 100
+
+    # Pre-validate before doing any matching
     if not no_validate:
         validate()
 
@@ -136,18 +146,18 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool) -> None:
         click.echo(f"> {click.style(album['album'], 'yellow')} by {click.style(album['artist'], 'yellow')} ({trackc} track{'s' if trackc > 1 else ''})")
 
         # Grab possible matches
-        if album["id"] is not None:
-            matches = [musicbrainzngs.get_release_by_id(album["id"], ["artist-credits", "recordings"])]
-
-        else:
-            matches = musicbrainzngs.search_releases(
+        ids = [album["id"]] if album["id"] is not None else [
+            result["id"] for result in musicbrainzngs.search_releases(
                 album["album"],
                 limit = 2,  # Might increase later
-                include = ["artist-credits", "recordings"],
                 artist = album["artist"],
                 tracks = len(album["tracks"])  # Just extra data, might not be deciding in some cases
-            )
-
+            )["release-list"] if int(result["ext:score"]) >= mb_score
+        ]
+        matches = [
+            musicbrainzngs.get_release_by_id(release_id, ["artist-credits", "recordings"])
+            for release_id in ids
+        ]
         if not matches:
             click.secho("  > Not found in the database.", fg = "red")
             continue
@@ -178,7 +188,7 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool) -> None:
                         attempted_match["recording"]["id"] == recording_id or \
                         (
                             str(attempted_match["position"]) == position and
-                            ratio(attempted_match["recording"]["title"].lower(), title.lower()) > .9
+                            ratio(attempted_match["recording"]["title"].lower(), title.lower()) > title_ratio
                         )
                 ]
                 if not matches:
@@ -191,7 +201,7 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool) -> None:
             match_scores.append((match, matched_files, len(matched_files) / len(album["tracks"])))
 
         match, tracks, score = sorted(match_scores, key = lambda match: match[2])[-1]
-        if score < .9:
+        if score < match_ratio:
             print("We have a match with less then 90% score, manually approve it or whatever and move on with your life.")
             input()
 
