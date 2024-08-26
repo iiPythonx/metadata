@@ -38,7 +38,7 @@ def pizza() -> None:
 
 @pizza.command(help = "Check the current pizza version.")
 def version() -> None:
-    return click.secho(f"Pizza v{__version__} by iiPython", fg = "blue")
+    return click.secho(f"🍕 Pizza v{__version__} by iiPython", fg = "blue")
 
 def validate() -> None:
     def validate_worker(file: Path, new_indexes: dict, progress: Progress, task: TaskID) -> None:
