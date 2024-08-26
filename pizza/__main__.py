@@ -86,6 +86,8 @@ def add(path: str, no_validate: bool) -> None:
                 del new_indexes[str(file)]
                 log.warn(f"'{file}' no longer exists.")
 
+            progress.update(task, advance = 1)
+
         new_indexes = index.indexes.copy()
         with Progress() as progress:
             task = progress.add_task("[cyan]Validating...", total = len(new_indexes))
