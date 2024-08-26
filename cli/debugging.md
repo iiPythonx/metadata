@@ -14,6 +14,11 @@ To do this from within Pizza, run:
 $ pizza index dump
 ```
 
+If your index becomes corrupted or otherwise invalid for some reason, you can do a force reset:
+```sh
+$ pizza index erase
+```
+
 ## Performing dry runs
 
 Before running `pizza write`, you can add the `--dry` flag to prevent Pizza from writing metadata to your files.
