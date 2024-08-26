@@ -21,4 +21,4 @@ logging.basicConfig(level = "WARN", format = "%(message)s", datefmt = "[%X]", ha
 log = logging.getLogger("rich")
 
 # Metadata
-__version__ = "0.4.6"
+__version__ = "0.4.7"

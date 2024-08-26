@@ -24,10 +24,11 @@ musicbrainzngs.set_useragent("pizza", __version__, "ben@iipython.dev")
 @click.option("--bpm", is_flag = True, show_default = True, default = False, help = "Include song BPM in metadata.")
 @click.option("--lyrics", is_flag = True, show_default = True, default = False, help = "Include lyrics from LRCLIB.")
 @click.option("--force", is_flag = True, show_default = True, default = False, help = "Force write metadata to files.")
+@click.option("--dry", is_flag = True, show_default = True, default = False, help = "Perform a dry run, without writing to files.")
 @click.option("--mb-score", show_default = True, default = 90, type = int, help = "Minimum MusicBrainz score before consideration.")
 @click.option("--title-ratio", show_default = True, default = 90, type = int, help = "Minimum title match ratio before consideration.")
 @click.option("--match-ratio", show_default = True, default = 90, type = int, help = "Minimum ratio of matching tracks before consideration.")
-def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, mb_score: int, title_ratio: float, match_ratio: float) -> None:
+def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, dry: bool, mb_score: int, title_ratio: float, match_ratio: float) -> None:
     if not all([mb_score in range(0, 100), title_ratio in range(0, 100), match_ratio in range(0, 100)]):
         return click.secho("✗ MusicBrainz score, title ratio, & match ratio must be 0-100.", fg = "red")
     
@@ -62,7 +63,7 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, mb_score: int
         click.echo(f"> {click.style(album['album'], 'yellow')} by {click.style(album['artist'], 'yellow')} ({trackc} track{'s' if trackc > 1 else ''})")
 
         # Grab possible matches
-        ids = [album["id"]] if album["id"] is not None else [
+        ids = [album["id"]] if album["id"] else [
             result["id"] for result in musicbrainzngs.search_releases(
                 album["album"],
                 limit = 2,  # Might increase later
@@ -108,7 +109,7 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, mb_score: int
                         )
                 ]
                 if not matches:
-                    click.secho(f"  > No match found for '{file.name}'.", fg = "yellow")
+                    click.secho(f"  > No match found for '{file.name}'.", fg = "red")
                     continue
 
                 matched_files[file] = matches[0]
@@ -119,9 +120,13 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, mb_score: int
         match, tracks, score = sorted(match_scores, key = lambda match: match[2])[-1]
         if score < match_ratio:
             print("We have a match with less then 90% score, manually approve it or whatever and move on with your life.")
-            input()
+            continue
+            # input()
 
         # Start assigning metadata
+        if dry:
+            continue
+
         for file, track in sorted(tracks.items(), key = lambda x: int(x[1]["position"])):
             metadata = FLAC(file)
             metadata.clear()
