@@ -20,4 +20,22 @@ The upside of this is modifying Pizza is dead simple and performance is much bet
 
 Pizza takes great pride in *multithreading everything that can be multithreaded*. MusicBrainz lookups, indexing, and validation are all performed with multiple threads depending on your hardware.
 
-* I'll insert performance benchmarks here soonish
+The following was ran on a library of 4100 tracks:
+
+| Tool                      | Index Time    | Lookup Time    | Total Time            |
+| -------------             | ------------- | -------------  | -------------         |
+| [Beets](https://beets.io) | N/A           | 607.64 seconds | 10.12 minutes         |
+| Pizza                     | 9.21 seconds  | 363.49 seconds | 6.21 minutes (372.7s) |
+
+Beets was ran with `beet im -q /mnt/music`, and Pizza was ran with `pizza write --dry`.
+
+::: details See the beets configuration
+
+`~/.config/beets/config.yaml`
+
+```yaml
+directory: /mnt/music
+import:
+    copy: no
+    write: no
+```
