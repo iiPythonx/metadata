@@ -2,15 +2,13 @@
 
 # Modules
 import atexit
+from typing import Tuple
 from pathlib import Path
-from typing import List, Tuple
 
 from orjson import loads, dumps
 from lz4.frame import compress, decompress
 
 # Main class
-Index = Tuple[str, str, List[Tuple]]
-
 class PizzaIndex():
     def __init__(self) -> None:
         self.index_path = Path.home() / ".cache/pizza/index.lz4"
@@ -23,9 +21,8 @@ class PizzaIndex():
 
         atexit.register(lambda: self.index_path.write_bytes(compress(dumps(self.indexes))))
 
-    def add(self, path: Path, index: Index) -> Index:
+    def add(self, path: Path, index: Tuple[str, str, dict]) -> None:
         self.indexes[str(path)] = index
-        return self.indexes[str(path)]  # Just to be sure we point to the right thing
 
     def indexed(self, path: Path) -> bool:
         return str(path) in self.indexes
