@@ -1,8 +1,4 @@
----
-outline: deep
----
-
-# Metedata Handling
+# Metadata Handling
 
 ## Matching algorithm
 
@@ -18,11 +14,13 @@ If the answer to one of these is yes, Pizza will mark the specific track as a ma
 After marking each track, Pizza will check how many unmatched tracks are left (if any), and will
 grade the albums based on which one had the most matches.
 
-## Available options
+## `pizza write`
+
+Take metadata from [MusicBrainz](https://musicbrainz.org) and write it to your files.
 
 ```sh
-pizza write [--no-validate] [--bpm] [--lyrics] [--force]
-            [--mb-score SCORE] [--title-ratio RATIO] [--match-ratio RATIO]
+$ pizza write [--no-validate] [--bpm] [--lyrics] [--force]
+              [--mb-score SCORE] [--title-ratio RATIO] [--match-ratio RATIO]
 ```
 
 The available options are available when running `pizza write`:
@@ -41,3 +39,11 @@ The available options are available when running `pizza write`:
     - This is the minimum ratio (in %) that a track title has to match the MusicBrainz information in order to match.
 - Album overall match ratio (`--match-ratio`)
     - This is the ratio of tracks that must match in order for an album to be considered a potential match.
+
+## `pizza clean`
+
+Erase all the metadata inside the specified files.
+
+```sh
+$ pizza clean [path]
+```

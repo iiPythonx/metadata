@@ -2,11 +2,15 @@
 outline: deep
 ---
 
-# Database Management
+# Indexing
 
 ## Available commands
 
 ### `pizza add`
+
+```sh
+$ pizza add [path]
+```
 
 The `pizza add` command takes any path on the filesystem and indexes it for use from within
 Pizza. As of now, you can only specify one path at a time, however this will be improved upon
@@ -16,6 +20,10 @@ soon.
 
 ### `pizza remove`
 
+```sh
+$ pizza remove [path]
+```
+
 The `pizza remove` command takes a path on the filesystem and removes it from Pizza's file index.
 This will prevent Pizza from writing any metadata to the files or even acknowledge they exist.
 
@@ -24,10 +32,18 @@ to do that you should run `pizza validate`.
 
 ### `pizza list`
 
+```sh
+$ pizza list [query]
+```
+
 The `pizza list` command lists all the files that Pizza is actively keeping track of, you can also
 directly query for a specific part of a filename or album by appending it to the end of `pizza list`.
 
 ### `pizza validate`
+
+```sh
+$ pizza validate
+```
 
 The `pizza validate` command will validate that all files inside your Pizza index are still available
 on the host filesystem. Any missing or otherwise inaccessible files will be dropped from the index,

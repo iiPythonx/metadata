@@ -10,7 +10,7 @@ hero:
   actions:
     - theme: brand
       text: Documentation
-      link: /getting-started
+      link: /intro/getting-started
     - theme: brand
       text: FAQs
       link: /faq
