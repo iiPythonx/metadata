@@ -9,11 +9,14 @@ from rich.logging import RichHandler
 from .index import index  # noqa: F401
 
 # Good ol' click
-@click.group()
+@click.group(epilog = "Copyright (c) 2024 iiPython")
 def pizza() -> None:
-    """Experimental CLI for managing metadata.
+    """Metadata that leaves a good aftertaste.
 
-    Code available at https://github.com/iiPythonx/pizza."""
+    \b
+    Source code   : https://github.com/iiPythonx/pizza
+    Documentation : https://pizza.iipython.dev
+    """
     return
 
 # Setup rich logging
@@ -21,4 +24,4 @@ logging.basicConfig(level = "WARN", format = "%(message)s", datefmt = "[%X]", ha
 log = logging.getLogger("rich")
 
 # Metadata
-__version__ = "0.4.7"
+__version__ = "0.5.0"
