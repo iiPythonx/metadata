@@ -157,9 +157,7 @@ def write(
 
         match, tracks, score = sorted(match_scores, key = lambda match: match[2])[-1]
         if score < match_ratio:
-            print("We have a match with less then 90% score, manually approve it or whatever and move on with your life.")
             continue
-            # input()
 
         # Start assigning metadata
         if dry:
