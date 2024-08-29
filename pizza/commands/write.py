@@ -3,6 +3,7 @@
 # Modules
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 import click
 import musicbrainzngs
@@ -20,6 +21,7 @@ musicbrainzngs.set_useragent("pizza", __version__, "ben@iipython.dev")
 
 # Command
 @pizza.command(help = "Perform a metadata update on all indexed files.")
+@click.argument("path", required = False, type = click.Path(True, True, False, path_type = Path))
 @click.option("--no-validate", is_flag = True, default = False, help = "Skip validating existing indexes (not recommended).")
 @click.option("--bpm", is_flag = True, show_default = True, default = False, help = "Include song BPM in metadata.")
 @click.option("--lyrics", is_flag = True, show_default = True, default = False, help = "Include lyrics from LRCLIB.")
@@ -28,10 +30,29 @@ musicbrainzngs.set_useragent("pizza", __version__, "ben@iipython.dev")
 @click.option("--mb-score", show_default = True, default = 90, type = int, help = "Minimum MusicBrainz score before consideration.")
 @click.option("--title-ratio", show_default = True, default = 90, type = int, help = "Minimum title match ratio before consideration.")
 @click.option("--match-ratio", show_default = True, default = 90, type = int, help = "Minimum ratio of matching tracks before consideration.")
-def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, dry: bool, mb_score: int, title_ratio: float, match_ratio: float) -> None:
+@click.option("--override-album", help = "Force the use of this specific album value.")
+@click.option("--override-title", help = "Force the use of this specific title value.")
+@click.option("--override-albumid", help = "Force the use of this specific album (release) ID.")
+def write(
+    path: Optional[Path],
+    no_validate: bool,
+    bpm: bool,
+    lyrics: bool,
+    force: bool,
+    dry: bool,
+    mb_score: int,
+    title_ratio: float,
+    match_ratio: float,
+    override_album: Optional[str],
+    override_title: Optional[str],
+    override_albumid: Optional[str]
+) -> None:
     if not all([mb_score in range(0, 100), title_ratio in range(0, 100), match_ratio in range(0, 100)]):
         return click.secho("✗ MusicBrainz score, title ratio, & match ratio must be 0-100.", fg = "red")
     
+    if any([override_title, override_album, override_albumid]) and path is None:
+        return click.secho("✗ Manual overrides can only be specified with a file path.", fg = "red")
+
     title_ratio /= 100
     match_ratio /= 100
 
@@ -39,9 +60,26 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, dry: bool, mb
     if not no_validate:
         validate()
 
+    # Handle index loading
+    indexes = index.indexes
+    if path is not None:
+        metadata = FLAC(path)
+        artist = metadata.get("ALBUMARTIST", metadata.get("ARTIST"))
+        if artist is None:
+            return click.secho(f"⚠ Not writing '{path}' due to missing ARTIST tag.")
+
+        album = override_album or (metadata.get("ALBUM") or [None])[0]
+        if album is None:
+            return click.secho(f"⚠ Not writing '{path}' due to missing ALBUM tag.")
+
+        indexes = {path: (artist[0], album, {
+            "title": [override_title or (metadata.get("title") or [None])[0]],
+            "musicbrainz_albumid": [override_albumid or (metadata.get("musicbrainz_albumid") or [None])[0]]
+        })}
+
     # Start grouping albums
     albums = []
-    for item, (artist, album, data) in index.indexes.items():
+    for item, (artist, album, data) in indexes.items():
         if "pizza" in data and not force:
             continue
 
@@ -100,7 +138,7 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, dry: bool, mb
                 # Start matching
                 matches = [
                     attempted_match for attempted_match in match_tracks
-                    if attempted_match["recording"]["title"] == title or \
+                    if ratio(attempted_match["recording"]["title"].lower(), title.lower()) > title_ratio or \
                         attempted_match["id"] == track_id or \
                         attempted_match["recording"]["id"] == recording_id or \
                         (
@@ -163,7 +201,8 @@ def write(no_validate: bool, bpm: bool, lyrics: bool, force: bool, dry: bool, mb
 
             # Save back to index database
             metadata.save()
-            index.add(file, (artist, album, dict(metadata)))
+            if path is None:
+                index.add(file, (artist, album, dict(metadata)))
 
             # Logging!
             click.secho(f"  > Updated metadata for '{file.name}'.", fg = "green")
