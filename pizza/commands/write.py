@@ -91,7 +91,7 @@ def write(
         existing_album[0]["tracks"].append((
             Path(item),
             data.get("title", [None])[0],
-            data.get("track", [None])[0],
+            data.get("tracknumber", [None])[0],
             data.get("musicbrainz_releasetrackid", [None])[0],
             data.get("musicbrainz_trackid", [None])[0]
         ))

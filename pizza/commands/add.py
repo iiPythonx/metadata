@@ -28,19 +28,19 @@ def add(path: str, no_validate: bool) -> None:
             # Calculate artist
             artist = metadata.get("ALBUMARTIST", metadata.get("ARTIST"))
             if artist is None:
-                log.warn(f"⚠ Skipping '{file}' due to missing ARTIST tag.")
+                log.warning(f"⚠ Skipping '{file}' due to missing ARTIST tag.")
                 return progress.update(task, advance = 1)
 
             album = metadata.get("ALBUM")
             if album is None:
-                log.warn(f"⚠ Skipping '{file}' due to missing ALBUM tag.")
+                log.warning(f"⚠ Skipping '{file}' due to missing ALBUM tag.")
                 return progress.update(task, advance = 1)
 
             artist, album = artist[0], album[0]
             index.add(file, (artist, album, dict(metadata)))
 
         except MutagenError:
-            log.warn(f"⚠ Failed loading file '{file}'.")
+            log.warning(f"⚠ Failed loading file '{file}'.")
 
         progress.update(task, advance = 1)
 
